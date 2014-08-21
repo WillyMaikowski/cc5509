@@ -18,6 +18,18 @@ for i in range( 10 ):
             imgs_train[CLASS].append( i )#clase
         
 
+imgs_test = [ [],[] ]
+for i in range( 10 ):
+    for r, d, f in os.walk( "digitos/test/digit_" + str( i ) ):
+        for img in f:
+            img = cv2.imread( img, 0 )  
+            ret, img = cv2.threshold( img, 127, 255, cv2.THRESH_BINARY )
+            img_feature = utils.apply4CC(img) #extraccion del histograma, deberia ser una funcion de img
+            hist = cv2.calcHist([img_feature], [0], None,[16],[0,16])
+            imgs_test[FEATURE].append( hist )#histograma
+            imgs_test[CLASS].append( i )#clase
+
+
 knn = cv2.KNearest()
 # Training
 knn.train( imgs_train[FEATURE], imgs_train[CLASS] )
