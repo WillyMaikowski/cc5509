@@ -3,6 +3,8 @@ import cv2
 import utils
 import os
 
+FEATURE = 0
+CLASS = 1
 
 imgs_train = [ [], [] ]
 for i in range( 10 ):
@@ -10,14 +12,15 @@ for i in range( 10 ):
         for img in f:
             img = cv2.imread( img, 0 )  
             ret, img = cv2.threshold( img, 127, 255, cv2.THRESH_BINARY )
-            img_feature = img #extraccion del histograma, deberia ser una funcion de img
-            imgs_train[0].append( img_feature )
-            imgs_train[1].append( i )
+            img_feature = utils.apply4CC(img) #extraccion del histograma, deberia ser una funcion de img
+            hist = cv2.calcHist([img_feature], [0], None,[16],[0,16])
+            imgs_train[FEATURE].append( hist )#histograma
+            imgs_train[CLASS].append( i )#clase
         
 
 knn = cv2.KNearest()
 # Training
-knn.train( imgs_train[0], imgs_train[1] )
+knn.train( imgs_train[FEATURE], imgs_train[CLASS] )
 
 '''
 #Prediction

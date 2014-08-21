@@ -70,6 +70,76 @@ def hasBlackBottomRight( img, i, j ):
             return True
     return False
 
+#retorna true si hay una salida por s1
+def hasS1(img, i, j):
+    if i <= 1:
+        return False
+    #se asume que el pixel esta rodeado en toda direccion
+    for k in range(i-1,-1,-1):
+        if img[k, j] == 0:#negro -> dejar de buscar
+            return False
+        if not hasBlackLeft(img, k, j):
+            return True
+    return False
+
+#retorna true si hay una salida por s2
+def hasS2(img, i, j):
+    if i <= 1:
+        return False
+    #se asume que el pixel esta rodeado en toda direccion
+    for k in range(i-1,-1,-1):
+        if img[k, j] == 0:#negro -> dejar de buscar
+            return False
+        if not hasBlackRight(img, k, j):
+            return True
+    return False
+
+#retorna true si hay una salida por s3
+def hasS3(img, i, j):
+    if i >= len(img)-1:
+        return False
+    #se asume que el pixel esta rodeado en toda direccion
+    for k in range(i+1, len(img)):
+        if img[k, j] == 0:#negro -> dejar de buscar
+            return False
+        if not hasBlackLeft(img, k, j):
+            return True
+    return False
+
+#retorna true si hay una salida por s4
+def hasS4(img, i, j):
+    if i >= len(img)-1:
+        return False
+    #se asume que el pixel esta rodeado en toda direccion
+    for k in range(i+1, len(img)):
+        if img[k, j] == 0:#negro -> dejar de buscar
+            return False
+        if not hasBlackRight(img, k, j):
+            return True
+    return False
+
+
+def apply4CC( img ):
+    aux = img.copy()
+    for i in range(len(img[0])):
+        for j in range(len(img)):
+            aux[i,j] = m4CC(img, i, j)
+    return aux
+
+def apply8CC( img ):
+    aux = img.copy()
+    for i in range(len(img[0])):
+        for j in range(len(img)):
+            aux[i,j] = m8CC(img, i, j)
+    return aux
+
+def apply13C( img ):
+    aux = img.copy()
+    for i in range(len(img[0])):
+        for j in range(len(img)):
+            aux[i,j] = m13C(img, i, j)
+    return aux
+
 def m13C( img, i, j ):
     right = hasBlackRight( img, i, j )  # 1
     left = hasBlackLeft( img, i, j )  # 3
@@ -108,7 +178,19 @@ def m13C( img, i, j ):
         if not left:
             return 7
     # num_negros == 4 =>encontrar direccion
-    # Faltan los ultimos cuatro bins
+    if hasS1:
+        return 9
+    
+    if hasS2:
+        return 10
+    
+    if hasS3:
+        return 11
+    
+    if hasS4:
+        return 12
+    
+    return 8#punto interior
 
 def m4CC( img, i, j ):
     right = hasBlackRight( img, i, j )  
