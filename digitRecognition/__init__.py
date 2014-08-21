@@ -27,7 +27,7 @@ for i in range( 10 ):
             img_feature = utils.apply4CC(img) #extraccion del histograma, deberia ser una funcion de img
             hist = cv2.calcHist([img_feature], [0], None,[16],[0,16])
             imgs_test[FEATURE].append( hist )#histograma
-            imgs_test[CLASS].append( i )#clase
+            imgs_test[CLASS].append( i )#clase 
 
 
 knn = cv2.KNearest()
