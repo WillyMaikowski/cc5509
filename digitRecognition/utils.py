@@ -1,10 +1,62 @@
 
-# -------------------------------------------------
-# Falta optimizar estos metodos, toman mucho tiempo. 
-# Quizas sea bueno hacerlo multi core para aprovechar
-# tu pc. Se me ocurrio una forma facil de hacerla y
-# tomaria tiempo O(n). Ahi vemos si hay una mejor forma!
-# -------------------------------------------------
+#Constantes
+BACKGROUND = 240
+FOREGROUND = 0
+MARKED = 1
+def mBlackTop( img ):
+    aux = img.copy()
+    for i in range( 1, len( aux ) ):
+        for j in range( len( aux[i] ) ):
+            if aux[i][j] == FOREGROUND:
+                continue
+            elif aux[i][j] == BACKGROUND and ( aux[i - 1][j] == FOREGROUND or aux[i - 1][j] == MARKED ):
+                aux[i][j] = MARKED
+    return aux
+
+def mBlackLeft( img ):
+    aux = img.copy()
+    for i in range( 1, len( aux ) ):
+        for j in range( len( aux[i] ) ):
+            if aux[j][i] == FOREGROUND:
+                continue
+            elif aux[j][i] == BACKGROUND and ( aux[j][i - 1] == FOREGROUND or aux[j][i - 1] == MARKED ):
+                aux[j][i] = MARKED
+    return aux
+
+def mBlackBottom( img ):
+    aux = img.copy()
+    for i in range( len( aux ) - 2, -1, -1 ):
+        for j in range( len( aux[i] ) ):
+            if aux[i][j] == FOREGROUND:
+                continue
+            elif aux[i][j] == BACKGROUND and ( aux[i + 1][j] == FOREGROUND or aux[i + 1][j] == MARKED ):
+                aux[i][j] = MARKED
+    return aux
+
+def mBlackRight( img ):
+    aux = img.copy()
+    for i in range( len( aux ) - 2, -1, -1 ):
+        for j in range( len( aux[i] ) ):
+            if aux[j][i] == FOREGROUND:
+                continue
+            elif aux[j][i] == BACKGROUND and ( aux[j][i + 1] == FOREGROUND or aux[j][i + 1] == MARKED ):
+                aux[j][i] = MARKED
+    return aux
+
+def apply4CCv2( img ):
+    top = mBlackTop( img )
+    right = mBlackRight( img )
+    bottom = mBlackBottom( img )
+    left = mBlackLeft( img )
+    aux = img.copy()
+    for i in range( len( img ) ):
+        for j in range( len( img[i] ) ):
+            if aux[i][j] == FOREGROUND:
+                aux[i][j] = -1
+            else:
+                aux[i][j] = ( int( top[i][j] ) << 3 | int( right[i][j] ) << 2 | int( bottom[i][j] ) << 1 | int( left[i][j] ) ) & 15
+    return aux
+
 
 def hasBlackLeft( img, i, j ):
     if j <= 0:

@@ -14,13 +14,19 @@ for i in range( 10 ):
     path = [ "digitos/train/digit_" + str( i ) + "/", "digitos/test/digit_" + str( i ) + "/" ]
     for j in range( 2 ):
         for r, d, f in os.walk( path[j] ):
+            print r
             for img in f:
                 img = cv2.imread( path[j] + img, 0 )
-                ret, img = cv2.threshold( img, 127, 255, cv2.THRESH_BINARY )
-                img_feature = utils.apply4CC( img )  # extraccion del histograma, deberia ser una funcion de img
+                ret, img = cv2.threshold( img, 127, utils.BACKGROUND, cv2.THRESH_BINARY )
+                #img = utils.mBlackRight(img)
+                #cv2.imshow('',img); cv2.waitKey(0); cv2.destroyAllWindows(); quit()
+                img_feature = utils.apply4CCv2( img )  # extraccion del histograma, deberia ser una funcion de img
                 hist = cv2.calcHist( [img_feature], [0], None, [16], [0, 16] )
+                #print hist; quit()
                 imgs[j][FEATURE].append( hist )  # histograma
                 imgs[j][CLASS].append( i )  # clase
+
+np.save('result.txt',imgs)
 
 knn = cv2.KNearest()
 # Training
