@@ -111,6 +111,20 @@ def apply8CCv2( img ):
                 aux[i, j] = ( int( topRight[i][j] ) << 3 | int( topLeft[i][j] ) << 2 | int( bottomRight[i][j] ) << 1 | int( bottomLeft[i][j] ) ) & 15
     return aux
 
+def apply13Cv2( img ):
+    top = mBlackTop( img )
+    right = mBlackRight( img )
+    bottom = mBlackBottom( img )
+    left = mBlackLeft( img )
+    aux = img.copy()
+    for i in range( len( img[0] ) ):
+        for j in range( len( img ) ):
+            if img[i, j] == 0:
+                aux[i, j] = -1
+            else:
+                aux[i, j] = m13Cv2( right, left, top, bottom, i, j )
+    return aux
+
 
 def hasBlackLeft( img, i, j ):
     if j <= 0:
@@ -196,6 +210,18 @@ def hasS1( img, i, j ):
             return True
     return False
 
+# retorna true si hay una salida por s1
+def hasS1v2( imgTL, i, j ):
+    if i <= 1:
+        return False
+    # se asume que el pixel esta rodeado en toda direccion
+    for k in range( i - 1, -1, -1 ):
+        if imgTL[k, j] == FOREGROUND:  # negro -> dejar de buscar
+            return False
+        if not imgTL[k,j]==MARKED:
+            return True
+    return False
+
 # retorna true si hay una salida por s2
 def hasS2( img, i, j ):
     if i <= 1:
@@ -205,6 +231,18 @@ def hasS2( img, i, j ):
         if img[k, j] == 0:  # negro -> dejar de buscar
             return False
         if not hasBlackRight( img, k, j ):
+            return True
+    return False
+
+# retorna true si hay una salida por s2
+def hasS2v2( imgTR, i, j ):
+    if i <= 1:
+        return False
+    # se asume que el pixel esta rodeado en toda direccion
+    for k in range( i - 1, -1, -1 ):
+        if imgTR[k, j] == FOREGROUND:  # negro -> dejar de buscar
+            return False
+        if not imgTR[k,j]==MARKED:
             return True
     return False
 
@@ -220,6 +258,18 @@ def hasS3( img, i, j ):
             return True
     return False
 
+# retorna true si hay una salida por s3
+def hasS3v2( imgBL, i, j ):
+    if i >= len( imgBL ) - 1:
+        return False
+    # se asume que el pixel esta rodeado en toda direccion
+    for k in range( i + 1, len( imgBL ) ):
+        if imgBL[k, j] == FOREGROUND:  # negro -> dejar de buscar
+            return False
+        if not imgBL[k,j]==MARKED:
+            return True
+    return False
+
 # retorna true si hay una salida por s4
 def hasS4( img, i, j ):
     if i >= len( img ) - 1:
@@ -229,6 +279,18 @@ def hasS4( img, i, j ):
         if img[k, j] == 0:  # negro -> dejar de buscar
             return False
         if not hasBlackRight( img, k, j ):
+            return True
+    return False
+
+# retorna true si hay una salida por s4
+def hasS4v2( imgBR, i, j ):
+    if i >= len( imgBR ) - 1:
+        return False
+    # se asume que el pixel esta rodeado en toda direccion
+    for k in range( i + 1, len( imgBR ) ):
+        if imgBR[k, j] == FOREGROUND:  # negro -> dejar de buscar
+            return False
+        if not imgBR[k,j]==MARKED:
             return True
     return False
 
@@ -311,6 +373,62 @@ def m13C( img, i, j ):
         return 11
 
     if hasS4:
+        return 12
+
+    return 8  # punto interior
+
+def m13Cv2( auxRight, auxLeft, auxTop, auxBottom, i, j ):
+    
+    if auxRight[i,j]==BACKGROUND:
+        return -1
+    
+    right = auxRight[i,j]==MARKED  # 1
+    left = auxLeft[i,j]==MARKED  # 3
+    top = auxTop[i,j]==MARKED  # 0
+    bottom = auxBottom[i,j]==MARKED  # 2
+    num_negros = 0
+    if right:
+        num_negros = num_negros + 1
+    if left:
+        num_negros = num_negros + 1
+    if top:
+        num_negros = num_negros + 1
+    if bottom:
+        num_negros = num_negros + 1
+
+    if num_negros <= 1:
+        return -1
+
+    if num_negros == 2:
+        if not top and not right:
+            return 0
+        if not right and not bottom:
+            return 1
+        if not bottom and not left:
+            return 2
+        if not left and not top:
+            return 3
+
+    if num_negros == 3:
+        if not top:
+            return 4
+        if not right:
+            return 5
+        if not bottom:
+            return 6
+        if not left:
+            return 7
+    # num_negros == 4 =>encontrar direccion
+    if hasS1v2(left,i,j):
+        return 9
+
+    if hasS2v2(right,i,j):
+        return 10
+
+    if hasS3v2(left,i,j):
+        return 11
+
+    if hasS4v2(right,i,j):
         return 12
 
     return 8  # punto interior
