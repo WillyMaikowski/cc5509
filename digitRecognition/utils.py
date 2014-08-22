@@ -37,10 +37,50 @@ def mBlackRight( img ):
     aux = img.copy()
     for i in range( len( aux ) - 2, -1, -1 ):
         for j in range( len( aux[i] ) ):
-            if aux[j][i] == FOREGROUND:
+            if aux[j][i] == FOREGROUND:#negro
                 continue
-            elif aux[j][i] == BACKGROUND and ( aux[j][i + 1] == FOREGROUND or aux[j][i + 1] == MARKED ):
+            elif aux[j][i] == BACKGROUND and ( aux[j][i + 1] == FOREGROUND or aux[j][i + 1] == MARKED ):#si pixel es blanco y derecha es negro o derecha marcado => marcar
                 aux[j][i] = MARKED
+    return aux
+
+def mBlackTopLeft( img ):
+    aux = img.copy()
+    for i in range( len( aux ) ):
+        for j in range( len( aux[i] ) ):
+            if i-1 < 0 or j-1 < 0 or aux[i][j] == FOREGROUND:
+                continue             
+            elif aux[i][j] == BACKGROUND and ( aux[i - 1][j - 1] == FOREGROUND or aux[i - 1][j - 1] == MARKED ):
+                aux[i][j] = MARKED
+    return aux
+
+def mBlackTopRight( img ):
+    aux = img.copy()
+    for i in range( len( aux ) ):
+        for j in range( len( aux[i] ) ):
+            if i-1 < 0 or j+1 >= len(aux[i]) or aux[i][j] == FOREGROUND:
+                continue             
+            elif aux[i][j] == BACKGROUND and ( aux[i - 1][j + 1] == FOREGROUND or aux[i - 1][j + 1] == MARKED ):
+                aux[i][j] = MARKED
+    return aux
+
+def mBlackBottomLeft( img ):
+    aux = img.copy()
+    for i in range( len( aux ) ):
+        for j in range( len( aux[i] ) ):
+            if i+1>= len(img) or j-1 < 0 or aux[i][j] == FOREGROUND:
+                continue             
+            elif aux[i][j] == BACKGROUND and ( aux[i + 1][j - 1] == FOREGROUND or aux[i + 1][j - 1] == MARKED ):
+                aux[i][j] = MARKED
+    return aux
+
+def mBlackBottomRight( img ):
+    aux = img.copy()
+    for i in range( len( aux ) ):
+        for j in range( len( aux[i] ) ):
+            if i+1>= len(img) or j+1 >= len(img[i]) or aux[i][j] == FOREGROUND:
+                continue             
+            elif aux[i][j] == BACKGROUND and ( aux[i + 1][j + 1] == FOREGROUND or aux[i + 1][j + 1] == MARKED ):
+                aux[i][j] = MARKED
     return aux
 
 def apply4CCv2( img ):
@@ -55,6 +95,20 @@ def apply4CCv2( img ):
                 aux[i][j] = -1
             else:
                 aux[i][j] = ( int( top[i][j] ) << 3 | int( right[i][j] ) << 2 | int( bottom[i][j] ) << 1 | int( left[i][j] ) ) & 15
+    return aux
+
+def apply8CCv2( img ):
+    topRight = mBlackTopRight( img )
+    topLeft = mBlackTopLeft( img )
+    bottomRight = mBlackBottomRight( img )
+    bottomLeft = mBlackBottomLeft( img )
+    aux = img.copy()
+    for i in range( len( img ) ):
+        for j in range( len( img[i] ) ):
+            if aux[i, j] == FOREGROUND:
+                aux[i, j] = -1
+            else:
+                aux[i, j] = ( int( topRight[i][j] ) << 3 | int( topLeft[i][j] ) << 2 | int( bottomRight[i][j] ) << 1 | int( bottomLeft[i][j] ) ) & 15
     return aux
 
 
