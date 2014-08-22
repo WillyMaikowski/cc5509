@@ -3,6 +3,7 @@
 BACKGROUND = 240
 FOREGROUND = 0
 MARKED = 1
+
 def mBlackTop( img ):
     aux = img.copy()
     for i in range( 1, len( aux ) ):
@@ -65,7 +66,7 @@ def mBlackTopRight( img ):
 
 def mBlackBottomLeft( img ):
     aux = img.copy()
-    for i in range( len( aux ) ):
+    for i in range( len( aux )-2, -1, -1 ):
         for j in range( len( aux[i] ) ):
             if i+1>= len(img) or j-1 < 0 or aux[i][j] == FOREGROUND:
                 continue             
@@ -75,7 +76,7 @@ def mBlackBottomLeft( img ):
 
 def mBlackBottomRight( img ):
     aux = img.copy()
-    for i in range( len( aux ) ):
+    for i in range( len( aux )-2, -1, -1 ):
         for j in range( len( aux[i] ) ):
             if i+1>= len(img) or j+1 >= len(img[i]) or aux[i][j] == FOREGROUND:
                 continue             
@@ -117,9 +118,9 @@ def apply13Cv2( img ):
     bottom = mBlackBottom( img )
     left = mBlackLeft( img )
     aux = img.copy()
-    for i in range( len( img[0] ) ):
-        for j in range( len( img ) ):
-            if img[i, j] == 0:
+    for i in range( len( aux ) ):
+        for j in range( len( aux[i] ) ):
+            if aux[i, j] == FOREGROUND:
                 aux[i, j] = -1
             else:
                 aux[i, j] = m13Cv2( right, left, top, bottom, i, j )
@@ -363,25 +364,21 @@ def m13C( img, i, j ):
         if not left:
             return 7
     # num_negros == 4 =>encontrar direccion
-    if hasS1:
+    if not hasS1:
         return 9
 
-    if hasS2:
+    if not hasS2:
         return 10
 
-    if hasS3:
+    if not hasS3:
         return 11
 
-    if hasS4:
+    if not hasS4:
         return 12
 
     return 8  # punto interior
 
 def m13Cv2( auxRight, auxLeft, auxTop, auxBottom, i, j ):
-    
-    if auxRight[i,j]==BACKGROUND:
-        return -1
-    
     right = auxRight[i,j]==MARKED  # 1
     left = auxLeft[i,j]==MARKED  # 3
     top = auxTop[i,j]==MARKED  # 0
@@ -419,16 +416,16 @@ def m13Cv2( auxRight, auxLeft, auxTop, auxBottom, i, j ):
         if not left:
             return 7
     # num_negros == 4 =>encontrar direccion
-    if hasS1v2(left,i,j):
+    if not hasS1v2(auxLeft,i,j):
         return 9
 
-    if hasS2v2(right,i,j):
+    if not hasS2v2(auxRight,i,j):
         return 10
 
-    if hasS3v2(left,i,j):
+    if not hasS3v2(auxLeft,i,j):
         return 11
 
-    if hasS4v2(right,i,j):
+    if not hasS4v2(auxRight,i,j):
         return 12
 
     return 8  # punto interior
@@ -442,13 +439,9 @@ def m4CC( img, i, j ):
     return int( top ) << 3 | int( right ) << 2 | int( bottom ) << 1 | int( left )
 
 def m8CC( img, i, j ):
-    right = hasBlackRight( img, i, j )
-    left = hasBlackLeft( img, i, j )
-    top = hasBlackTop( img, i, j )
-    bottom = hasBlackBottom( img, i, j )
     topLeft = hasBlackTopLeft( img, i, j )
     bottomLeft = hasBlackBottomLeft( img, i, j )
     bottomRight = hasBlackBottomRight( img, i, j )
     topRight = hasBlackTopRight( img, i, j )
 
-    return int( top ) << 7 | int( topRight ) << 6 | int( right ) << 5 | int( bottomRight ) << 4 | int( bottom ) << 3 | int( bottomLeft ) << 2 | int( left ) << 1 | int( topLeft )
+    return int( topRight ) << 3 | int( topLeft ) << 2 | int( bottomRight ) << 1 | int( bottomLeft )
