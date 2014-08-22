@@ -125,20 +125,6 @@ def apply13Cv2( img ):
                 aux[i, j] = m13Cv2( right, left, top, bottom, i, j )
     return aux
 
-def apply8CCv2( img ):
-    topRight = mBlackTopRight( img )
-    topLeft = mBlackTopLeft( img )
-    bottomRight = mBlackBottomRight( img )
-    bottomLeft = mBlackBottomLeft( img )
-    aux = img.copy()
-    for i in range( len( img ) ):
-        for j in range( len( img[i] ) ):
-            if aux[i, j] == FOREGROUND:
-                aux[i, j] = -1
-            else:
-                aux[i, j] = ( int( topRight[i][j] ) << 3 | int( topLeft[i][j] ) << 2 | int( bottomRight[i][j] ) << 1 | int( bottomLeft[i][j] ) ) & 15
-    return aux
-
 
 def hasBlackLeft( img, i, j ):
     if j <= 0:
