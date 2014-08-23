@@ -56,6 +56,7 @@ np.save('process'+experiment,imgs)
 np.save('process_2x2'+experiment,imgs_2x2)
 np.save('process_4x4'+experiment,imgs_4x4)
 
+
 #knn = cv2.KNearest()
 # Training
 #knn.train( np.asarray(imgs[TRAIN][FEATURE]), np.asarray(imgs[TRAIN][CLASS]) )
