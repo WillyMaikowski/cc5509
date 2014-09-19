@@ -68,10 +68,7 @@ for j in range(2):
             #ver http://stackoverflow.com/questions/13254234/train-skin-pixels-using-opencv-cvnormalbayesclassifier
             img = np.reshape(img, (img[:,:,0].size,3))
             imgGroundThruth = np.reshape(imgGroundThruth, imgGroundThruth.size)
-            
-           
-                
-            
+
             if( j == 0 ):
                 if count == 1:
                     train = img
@@ -96,6 +93,18 @@ bayes = cv2.NormalBayesClassifier(np.float32(train), np.float32(train_responses)
 #np.save('backup_train',bayes)
 
 #cv2.NormalBayesClassifier.predict(samples)
+
+# Prediction
+retval, results = bayes.predict(np.float32(test))
+
+results = np.hstack(results)
+
+
+matches = results == test_responses
+correct = np.count_nonzero( matches )
+accuracy = correct * 100.0 / results.size
+print accuracy
+
 
 
 #print( "total pixels = " + str(totalPixels))
