@@ -91,8 +91,9 @@ for j in range(2):
                     #test.append(img)
                     #test_responses.append(imgGroundThruth)
 
-bayes = cv2.NormalBayesClassifier(np.hstack(train), np.hstack(train_responses))
-np.save('backup_train',bayes)
+print("Entrenando")
+bayes = cv2.NormalBayesClassifier(np.float32(train), np.float32(train_responses))
+#np.save('backup_train',bayes)
 
 #cv2.NormalBayesClassifier.predict(samples)
 
