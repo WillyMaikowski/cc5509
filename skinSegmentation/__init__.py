@@ -29,13 +29,15 @@ for j in range(2):
     count = 0
     for r, d, f in os.walk(path[j]+"original/"):
         for imgName in f:
+            #imgName = "img22.jpg"
             count = count + 1
             img = cv2.imread(path[j]+"original/" + imgName, cv2.IMREAD_COLOR)
+            img_skin = img.copy()
             #img2 = cv2.imread(path[j]+"original/img5.jpg", cv2.IMREAD_COLOR)
             imgGroundThruth = cv2.imread(path[j]+"groundThruth/" + imgName, 0)
             #ret, imgGroundThruth = cv2.threshold(imgGroundThruth, 127, 255, cv2.THRESH_BINARY)#todos los grises los tira a blanco
             ret, imgGroundThruth_inv = cv2.threshold(imgGroundThruth, 127, 1, cv2.THRESH_BINARY)#uno indica no piel, cero indica piel
-            ret, imgGroundThruth = cv2.threshold(imgGroundThruth, 128, 1, cv2.THRESH_BINARY_INV)#uno indica piel, cero indica no piel
+            ret, imgGroundThruth = cv2.threshold(imgGroundThruth, 127, 1, cv2.THRESH_BINARY_INV)#uno indica piel, cero indica no piel
 
             skin_img = cv2.bitwise_and(img,img,mask = imgGroundThruth)
             non_skin_img = cv2.bitwise_and(img,img,mask = imgGroundThruth_inv)
@@ -43,12 +45,12 @@ for j in range(2):
 
             #hist = cv2.calcHist( [imgGroundThruth], [0], None, [2], [0, 256], False )
 
-            #hist = cv2.calcHist( [imgGroundThruth], [0], None, [2], [0, 2], False )
+            hist = cv2.calcHist( [imgGroundThruth], [0], None, [2], [0, 2], False )
             #print(hist)
 
-            #totalSkinPixels += hist[0][0]
-            #totalNonSkinPixels += hist[1][0]
-            #totalPixels += img[:,:,0].size
+            totalSkinPixels += hist[0][0]
+            totalNonSkinPixels += hist[1][0]
+            totalPixels += img[:,:,0].size
 
             #print(hist)
             #print( totalPixels)
@@ -57,7 +59,7 @@ for j in range(2):
             #print( totalNonSkinPixels + totalSkinPixels )
 
             #cv2.imshow('',img[:,:,1]); cv2.waitKey(0); cv2.destroyAllWindows(); quit()
-            #cv2.imshow('',non_skin_img); cv2.waitKey(0); cv2.destroyAllWindows(); quit()
+            #cv2.imshow('',skin_img); cv2.waitKey(0); cv2.destroyAllWindows(); quit()
 
             #curve = utils.hist_curve(img)
             #cv2.imshow('histogram',curve)
@@ -78,22 +80,21 @@ for j in range(2):
 
             #ver http://stackoverflow.com/questions/13254234/train-skin-pixels-using-opencv-cvnormalbayesclassifier
 
+
             # if( j == 0 ):
             #     #generar un histograma de los distintos colores
             #     for k in range(len(imgGroundThruth)):
             #         for l in range(len(imgGroundThruth[0])):
             #             key = tuple(img[k][l])
             #             if imgGroundThruth[k][l] == 1:#piel
-            #                 if key in skin_freq.keys():
-            #                     skin_freq[key] = skin_freq[key] + 1
-            #                 else:
-            #                     skin_freq[key] = 1
+            #                 skin_freq[key] = skin_freq.get(key, 0) + 1
             #             else:
-            #                 if key in non_skin_freq.keys():
-            #                     non_skin_freq[key] = non_skin_freq[key] + 1
-            #                 else:
-            #                     non_skin_freq[key] = 1
-            # print(count)
+            #                 non_skin_freq[key] = non_skin_freq.get(key, 0) + 1
+            #
+            #     np.save('count', count)
+            #     np.save('piel_dict',skin_freq)
+            #     np.save('no_piel_dict',non_skin_freq)
+
 
 
 
@@ -116,11 +117,10 @@ for j in range(2):
                     non_skin_points = np.vstack((non_skin_points, non_skin_img))
 
 
-
             img = np.reshape(img, (img[:,:,0].size,3))
             imgGroundThruth = np.reshape(imgGroundThruth, imgGroundThruth.size)
 
-            print( count )
+            print( "count",count )
 
 
             if( j == 0 ):
@@ -142,11 +142,28 @@ for j in range(2):
                     #test.append(img)
                     #test_responses.append(imgGroundThruth)
 
+            # index = 0
+            # for k in range(len(img_skin)):
+            #     for l in range(len(img_skin[0])):
+            #         if imgGroundThruth[index] == 1:
+            #             img_skin[k,l] = (0,0,0)
+            #         index +=1
 
-np.save('piel_dict',skin_freq)
-np.save('no_piel_dict',non_skin_freq)
+            #cv2.imshow('image',img_skin); cv2.waitKey(0); cv2.destroyAllWindows();
 
-print(skin_points)
+#np.save('piel_dict',skin_freq)
+#np.save('no_piel_dict',non_skin_freq)
+
+
+skin_freq = np.load('piel_dict.npy').item()
+non_skin_freq = np.load('no_piel_dict.npy').item()
+
+
+#print(skin_freq)
+#print(non_skin_freq)
+#print(non_skin_freq)
+
+#print(skin_points)
 print("imagenes leidas")
 
 fig = plt.figure( figsize = (20,20) )
@@ -192,9 +209,10 @@ bayes = cv2.NormalBayesClassifier(np.float32(train), np.float32(train_responses)
 
 #cv2.NormalBayesClassifier.predict(samples)
 
-# Prediction
+ #Prediction
 predictions = []
 j=1
+#usando clasificador de bayes
 for r, d, f in os.walk(path[j]+"original/"):
     for imgName in f:
         img_original = cv2.imread(path[j]+"original/" + imgName, cv2.IMREAD_COLOR)
@@ -228,8 +246,6 @@ for r, d, f in os.walk(path[j]+"original/"):
 
         #cv2.imshow(imgName+"_recontru",img_reconstruct);
         cv2.imshow(imgName,img_original); cv2.waitKey(0); cv2.destroyAllWindows();
-
-
 print(predictions)
 
 retval, results = bayes.predict(np.float32(test))
@@ -238,6 +254,71 @@ matches = results == test_responses
 correct = np.count_nonzero( matches )
 accuracy = correct * 100.0 / results.size
 print "Total",accuracy
+
+
+####################################################################################
+predictions = []
+j=1
+phi = 1
+PC1 = 1.0*totalSkinPixels/totalPixels#probabilidad ser piel
+PC2 = 1.0*totalNonSkinPixels/totalPixels#probabilidad no ser piel
+#usando clasificador casero
+for r, d, f in os.walk(path[j]+"original/"):
+    for imgName in f:
+        #imgName = "img22.jpg"
+
+        img_original = cv2.imread(path[j]+"original/" + imgName, cv2.IMREAD_COLOR)
+        img = img_original.copy()
+        imgGroundThruth = cv2.imread(path[j]+"groundThruth/" + imgName, 0)
+        ret, imgGroundThruth = cv2.threshold(imgGroundThruth, 128, 1, cv2.THRESH_BINARY_INV)#uno indica piel, cero indica no piel
+        #print(imgGroundThruth[len(imgGroundThruth[0])/2,])
+        imgGroundThruth = np.reshape(imgGroundThruth, imgGroundThruth.size)
+
+        results = []
+
+        for k in range(len(img_original)):
+            for l in range(len(img_original[0])):
+                key = tuple(img_original[k][l])
+                PXi_C1 = 1.0*skin_freq.get(key,0)/totalSkinPixels
+                PXi_C2 = 1.0*non_skin_freq.get(key,0)/totalNonSkinPixels
+                PXi = PXi_C1*PC1 + PXi_C2*PC2
+                PC1_Xi = PXi_C1*PC1/PXi
+                PC2_Xi = PXi_C2*PC2/PXi
+                if PC1_Xi > PC2_Xi*phi:#es piel
+                    results.append(1)
+                else:
+                    results.append(0)
+
+        matches = results == imgGroundThruth
+        correct = np.count_nonzero( matches )
+        accuracy = correct * 100.0 / len(results)
+        predictions.append( (imgName, accuracy) )
+        print((imgName, accuracy))
+
+        index = 0
+
+        cv2.imshow(imgName+"original",img_original);
+
+        for k in range(len(img_original)):
+            for l in range(len(img_original[0])):
+                if results[index] == 1:#predijo piel
+                    img_original[k,l]=(0,255,0)
+                #else:
+                #    img_original[k,l]=(255,0,0)
+                if imgGroundThruth[index] == 1:
+                    img[k,l] = (255,255,255)
+
+                index+=1
+
+        cv2.imshow(imgName+"mascara",img);
+        cv2.imshow(imgName,img_original); cv2.waitKey(0); cv2.destroyAllWindows();
+
+# retval, results = bayes.predict(np.float32(test))
+# results = np.hstack(results)
+# matches = results == test_responses
+# correct = np.count_nonzero( matches )
+# accuracy = correct * 100.0 / results.size
+# print "Total",accuracy
 
 
 
