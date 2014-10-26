@@ -46,11 +46,11 @@ for r, d, f in os.walk(path):
             descriptors.append(des[i])
 
         #print(len(descriptors))
-        if( num % 100 == 0):
+        if num % 1500 == 0:
             print(num)
 
-        if( num % 500 == 0):
-            break
+        #if( num % 500 == 0):
+        #     break
 
         #print(len(descriptors))
         #print("#######################")
@@ -65,99 +65,121 @@ for r, d, f in os.walk(path):
 
 descriptors = random.sample(descriptors, 50000)
 #descriptors = random.sample(descriptors, 100000)
+print("Desciptors generados")
+
+K = 200
+while K <= 2000:
+    norm = cv2.NORM_L2
+    ret, labels, centers = cv2.kmeans(np.asarray( descriptors ), K, (cv2.TERM_CRITERIA_EPS, 30, 0.1),10,cv2.KMEANS_RANDOM_CENTERS)
+    print("kmeans entrenado")
+    #np.save('backup_descriptors', descriptors)
+
+    knn_clusters = cv2.KNearest()
+    knn_clusters.train( centers, np.asarray( list(xrange(len(centers))) ) )
+    print("knn entrenado")
 
 
-K=200
-norm = cv2.NORM_L2
-ret, labels, centers = cv2.kmeans(np.asarray( descriptors ), K, (cv2.TERM_CRITERIA_EPS, 30, 0.1),10,cv2.KMEANS_RANDOM_CENTERS)
-print("kmeans entrenado")
-#np.save('backup_descriptors', descriptors)
+    #print(centers)
+    TRAIN = 0
+    TEST = 1
+    FEATURE = 0
+    CLASS = 1
+    path = ["datos/train/perro/", "datos/train/no_perro/", "datos/test/perro/", "datos/test/no_perro/"]
+    TYPE = [TRAIN, TRAIN, TEST, TEST]
 
-knn_clusters = cv2.KNearest()
-knn_clusters.train( centers, np.asarray( list(xrange(len(centers))) ) )
-print("knn entrenado")
+    if True:
+        final_descriptor = [ [ [], [] ], [ [], [] ] ]
+        n = 0
+        for i in range(len(path)):
+            for r, d, f in os.walk(path[i]):
+                for img_name in f:
 
+                    if n % 500 == 0:
+                        print(n)
+                    n = n + 1
 
-#print(centers)
-TRAIN = 0
-TEST = 1
-FEATURE = 0
-CLASS = 1
-path = ["datos/train/perro/", "datos/train/no_perro/", "datos/test/perro/", "datos/test/no_perro/"]
-TYPE = [TRAIN, TRAIN, TEST, TEST]
+                    img = cv2.imread(path[i] + img_name)
+                    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-if( True ):
-    final_descriptor = [ [ [], [] ], [ [], [] ] ]
-    n = 0
-    for i in range(len(path)):
-        for r, d, f in os.walk(path[i]):
-            for img_name in f:
+                    sift = cv2.SIFT()
+                    kp, des = sift.detectAndCompute(gray, None)
 
-                if( n% 100 == 0 ):
-                    print(n)
-                n = n + 1
+                    img_descp = []
+                    if( des is None ):
+                        continue
 
-                img = cv2.imread(path[i] + img_name)
-                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                    #print(des)
+                    retval, results, neigh_resp, dists = knn_clusters.find_nearest( np.asarray( des ), 1 )
 
-                sift = cv2.SIFT()
-                kp, des = sift.detectAndCompute(gray, None)
+                    for k in range(len(results)):#un resultado para cada desciptor de la imagen
+                        img_descp.append( results[k] )#encuentro cluster mas cercano al descriptor
 
-                img_descp = []
-                if( des is None ):
-                    continue
+                    img_descp = np.asarray( img_descp )
 
-                #print(des)
-                retval, results, neigh_resp, dists = knn_clusters.find_nearest( np.asarray( des ), 1 )
+                    hist = cv2.calcHist( [img_descp], [0], None, [K], [0, K] )
 
-                for k in range(len(results)):
-                    img_descp.append( results[k] )#encuentro cluster mas cercano al descriptor
+                    cv2.normalize(hist, hist, 0, 1, cv2.NORM_MINMAX )
+                    #print(hist)
+                    final_descriptor[TYPE[i]][FEATURE].append(  hist.copy() )
+                    if( i == 1 or i == 3 ):#no perro
+                        final_descriptor[TYPE[i]][CLASS].append( -1 )
+                    else:#perro
+                        final_descriptor[TYPE[i]][CLASS].append( 1 )
 
-                img_descp = np.asarray( img_descp )
-
-                hist = cv2.calcHist( [img_descp], [0], None, [K+1], [0, K+1] )
-                #print(hist)
-                cv2.normalize(hist, hist, 0, 1, cv2.NORM_MINMAX )
-                final_descriptor[TYPE[i]][FEATURE].append( np.int32( hist ) )
-                #train_descriptor.append( np.asarray( hist ))
-                if( i == 1 or i == 3 ):
-                    final_descriptor[TYPE[i]][CLASS].append( 1 )
-                    #train_class.append(1)
-                else:
-                    final_descriptor[TYPE[i]][CLASS].append( -1 )
-                    #train_class.append(-1)
-
-    print("Datos entrenamiento y testeo leidos")
+        print("Datos entrenamiento y testeo leidos")
 
 
-np.save('final_descriptor',final_descriptor)
+    C = 1.0
+    classifier = svm.SVC(kernel='rbf', probability=True, gamma=0.7, C=C)#.fit(train_descriptor, train_class)
 
-C = 1.0
-classifier = svm.SVC(kernel='rbf', probability=True, gamma=0.7, C=C)#.fit(train_descriptor, train_class)
+    # print(len(final_descriptor[TRAIN][FEATURE][0]))
+    # print(len(final_descriptor[TRAIN][CLASS]))
+    # print(final_descriptor[TRAIN][FEATURE][0])
+    # print(final_descriptor[TRAIN][CLASS][0])
+    # print(final_descriptor[TEST][CLASS][0])
+    # print(final_descriptor[TEST][CLASS][0])
+    #
+    # print(np.asarray( final_descriptor[TRAIN][CLASS] ).shape)
+    # print(np.asarray( final_descriptor[TRAIN][FEATURE] ).shape[:2])
+    # print(np.squeeze( np.asarray( final_descriptor[TRAIN][FEATURE] )).shape)
+    # print(np.asarray( final_descriptor[TRAIN][FEATURE] ).reshape((999,200)).shape)
+    # print(np.asarray( final_descriptor[TEST][FEATURE] ).reshape((400,200)).shape)
+    # print(np.asarray( final_descriptor[TEST][CLASS] ).shape)
 
-print(len(final_descriptor[TRAIN][FEATURE]))
-print(len(final_descriptor[TRAIN][CLASS]))
-print(final_descriptor[TRAIN][FEATURE][0])
-print(final_descriptor[TRAIN][CLASS][0])
-print(final_descriptor[TEST][CLASS][0])
-print(final_descriptor[TEST][CLASS][0])
-
-y_score = classifier.fit( final_descriptor[TRAIN][FEATURE], final_descriptor[TRAIN][CLASS] ).decision_function( np.asarray(final_descriptor[TEST][FEATURE] ))
+    final_descriptor[TRAIN][FEATURE] = np.asarray( np.asarray( final_descriptor[TRAIN][FEATURE] ).reshape(  np.asarray( final_descriptor[TRAIN][FEATURE] ).shape[:2] ) )
+    final_descriptor[TEST][FEATURE] = np.asarray( np.asarray( final_descriptor[TEST][FEATURE] ).reshape(  np.asarray( final_descriptor[TEST][FEATURE] ).shape[:2] ) )
+    # print( final_descriptor[TRAIN][FEATURE].shape )
+    # print( final_descriptor[TEST][FEATURE].shape )
 
 
-fpr, tpr, _ = roc_curve(final_descriptor[TEST][CLASS], y_score)
-roc_auc = auc(fpr, tpr)
+    y_score = classifier.fit( final_descriptor[TRAIN][FEATURE], final_descriptor[TRAIN][CLASS] ).decision_function( final_descriptor[TEST][FEATURE])
 
-plt.figure()
-plt.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
-plt.plot([0, 1], [0, 1], 'k--')
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Receiver operating characteristic example')
-plt.legend(loc="lower right")
-plt.show()
+
+    fpr, tpr, _ = roc_curve(final_descriptor[TEST][CLASS], y_score)
+    roc_auc = auc(fpr, tpr)
+
+
+
+    plt.figure()
+    plt.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC curve K='+str(K))
+    plt.legend(loc="lower right")
+    plt.savefig("K="+str(K)+".png")
+    #plt.show()
+
+    print(fpr)
+    print("---------------------------------------------------------------------")
+    print(tpr)
+
+    np.savetxt('fpr_K='+str(K)+".txt", fpr)
+    np.savetxt('tpr_K='+str(K)+".txt", tpr)
+
+    K = K + 300
 
 #mean_tpr = 0.0
 #mean_fpr = np.linspace(0, 1, 100)
